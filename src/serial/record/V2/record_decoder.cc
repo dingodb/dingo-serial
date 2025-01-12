@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "serial/utils/V2/utils.h"
 #include "serial/record/V2/value_header.h"
@@ -33,12 +34,33 @@ constexpr int kBufInitCapacity = 2048;
 using CastAndDecodeOrSkipFuncPointer =
     void (*)(BaseSchemaPtr schema, Buf& key_buf, Buf& value_buf,
              std::vector<std::any>& record, int record_index, bool skip,
-             std::map<int, int>& id_offset_map);
+             dingodb::serialV2::ValueHeader& valueHeader);
 
 template <typename T>
 void CastAndDecodeOrSkip(BaseSchemaPtr schema, Buf& key_buf, Buf& value_buf,
                          std::vector<std::any>& record, int record_index,
-                         bool is_skip, std::map<int, int>& id_offset_map) {
+                         bool is_skip, dingodb::serialV2::ValueHeader& valueHeader) {
+
+  auto getOffset = [&valueHeader, &value_buf](int index) -> int {
+      int start = valueHeader.ids_pos;
+      int end = valueHeader.offset_pos - 2;
+
+      while (start <= end) {
+        int mid = (start/2 + (end/2 - start/2) / 2) * 2;
+        int cur_id = value_buf.ReadShort(mid);
+        if (cur_id == index) {
+          int offsetPos = (mid - valueHeader.ids_pos)/2;
+          return value_buf.ReadInt(valueHeader.offset_pos + offsetPos * 4);
+        } else if (cur_id < index) {
+          start = mid + 2;
+        } else {
+          end = mid - 2;
+        }
+      }
+
+      return -1; //should not come here.
+  };
+
   auto dingo_schema = std::dynamic_pointer_cast<DingoSchema<T>>(schema);
   if (is_skip) {
     if (schema->IsKey()) {
@@ -51,7 +73,7 @@ void CastAndDecodeOrSkip(BaseSchemaPtr schema, Buf& key_buf, Buf& value_buf,
       if (value_buf.IsEnd()) {
         record.at(record_index) = std::any();
       } else {
-        int offset = id_offset_map[schema->GetIndex()];
+        int offset = getOffset(schema->GetIndex());
         if (offset != -1) {
           record.at(record_index) = dingo_schema->DecodeValue(value_buf);
         } else {
@@ -117,9 +139,9 @@ inline bool RecordDecoderV2::CheckSchemaVersion(Buf& buf) const {
 
 void DecodeOrSkip(BaseSchemaPtr schema, Buf& key_buf, Buf& value_buf,
                   std::vector<std::any>& record, int record_index, bool skip,
-                  std::map<int, int>& id_offset_map) {
+                  dingodb::serialV2::ValueHeader& valueHeader) {
   cast_and_decode_or_skip_func_ptrs[static_cast<int>(schema->GetType())](
-      schema, key_buf, value_buf, record, record_index, skip, id_offset_map);
+      schema, key_buf, value_buf, record, record_index, skip, valueHeader);
 }
 
 int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
@@ -132,33 +154,16 @@ int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
     return -1;
   }
 
-  //int cnt_not_null_col = value_buf.ReadShort();
-  //int cnt_null_col = value_buf.ReadShort();
-  //int total_col_cnt = cnt_not_null_col + cnt_null_col;
-
-  //int ids_pos =
-  //    8;  // schema_version(4 bytes) + col_cnt (2 bytes + 2bytes) = 8 bytes.
-  //int offset_pos = 8 + 2 * total_col_cnt;
-  //int data_pos = offset_pos + 4 * total_col_cnt;
   ValueHeader value_header(value_buf);
-
   if (value_header.total_col_cnt != value_header.cnt_null_col) {
     value_buf.SetReadOffset(value_header.data_pos);
   }
-
-  //std::map<int, int> col_id_offset_map;
-  //for (int i = 0; i < total_col_cnt; ++i) {
-  //  col_id_offset_map[value_buf.ReadShort(ids_pos)] =
-  //      value_buf.ReadInt(offset_pos);
-  //  ids_pos += 2;
-  //  offset_pos += 4;
-  //}
 
   record.resize(schemas_.size());
   for (const auto& bs : schemas_) {
     if (bs) {
       DecodeOrSkip(bs, key_buf, value_buf, record, bs->GetIndex(), false,
-                   value_header.col_id_offset_map);
+                   value_header);
     }
   }
 
@@ -175,34 +180,17 @@ int RecordDecoderV2::Decode(std::string&& key, std::string&& value,
     return -1;
   }
 
-  //int cnt_not_null_col = value_buf.ReadShort();
-  //int cnt_null_col = value_buf.ReadShort();
-  //int total_col_cnt = cnt_not_null_col + cnt_null_col;
-
-  //int ids_pos =
-  //    8;  // schema_version(4 bytes) + col_cnt (2 bytes + 2bytes) = 8 bytes.
-  //int offset_pos = 8 + 2 * total_col_cnt;
-  //int data_pos = offset_pos + 4 * total_col_cnt;
   ValueHeader value_header(value_buf);
-
   if (value_header.total_col_cnt != value_header.cnt_null_col) {
     // If not means all value fields are null.
     value_buf.SetReadOffset(value_header.data_pos);
   }
 
-  //std::map<int, int> col_id_offset_map;
-  //for (int i = 0; i < value_header.total_col_cnt; ++i) {
-  //  col_id_offset_map[value_buf.ReadShort(value_header.ids_pos)] =
-  //      value_buf.ReadInt(value_header.offset_pos);
-  //  value_header.ids_pos += 2;
-  //  value_header.offset_pos += 4;
-  //}
-
   record.resize(schemas_.size());
   for (const auto& bs : schemas_) {
     if (bs) {
       DecodeOrSkip(bs, key_buf, value_buf, record, bs->GetIndex(), false,
-                   value_header.col_id_offset_map);
+                   value_header);
     }
   }
 
@@ -217,14 +205,15 @@ int RecordDecoderV2::DecodeKey(const std::string& key,
     return -1;
   }
 
-  std::map<int, int> id_offset_map;
+  std::unordered_map<int, int> id_offset_map;
   int total_col_cnt = 0;
+  ValueHeader value_header;
 
   record.resize(schemas_.size());
   int index = 0;
   for (const auto& bs : schemas_) {
     if (bs && bs->IsKey()) {
-      DecodeOrSkip(bs, key_buf, key_buf, record, index, false, id_offset_map);
+      DecodeOrSkip(bs, key_buf, key_buf, record, index, false, value_header);
     }
     index++;
   }
@@ -238,7 +227,7 @@ int RecordDecoderV2::Decode(const KeyValue& key_value,
 }
 
 int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
-                            const std::vector<int>& column_indexes,
+                            std::unordered_map<int, int>& column_indexes_serial,
                             std::vector<std::any>& record) {
   Buf key_buf(key, this->le_);
   Buf value_buf(value, this->le_);
@@ -248,41 +237,13 @@ int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
     return -1;
   }
 
-  //int cnt_not_null_col = value_buf.ReadShort();
-  //int cnt_null_col = value_buf.ReadShort();
-  //int total_col_cnt = cnt_not_null_col + cnt_null_col;
-
-  //int ids_pos =
-  //    8;  // schema_version(4 bytes) + col_cnt (2 bytes + 2bytes) = 8 bytes.
-  //int offset_pos = 8 + 2 * total_col_cnt;
-  //int data_pos = offset_pos + 4 * total_col_cnt;
   ValueHeader value_header(value_buf);
-
   if (value_header.total_col_cnt != value_header.cnt_null_col) {
     value_buf.SetReadOffset(value_header.data_pos);
   }
 
-  //std::map<int, int> col_id_offset_map;
-  //for (int i = 0; i < value_header.total_col_cnt; ++i) {
-  //  col_id_offset_map[value_buf.ReadShort(value_header.ids_pos)] =
-  //      value_buf.ReadInt(value_header.offset_pos);
-
-  //  value_header.ids_pos += 2;
-  //  value_header.offset_pos += 4;
-  //}
-
-  uint32_t size = column_indexes.size();
+  uint32_t size = column_indexes_serial.size();
   record.resize(size);
-
-  // clo_index: offset
-  std::vector<std::pair<uint32_t, uint32_t>> col_index_mapping;
-  col_index_mapping.reserve(size);
-  for (uint32_t i = 0; i < size; ++i) {
-    col_index_mapping.push_back(std::make_pair(column_indexes[i], i));
-  }
-
-  // sort indexed_mapping_index
-  std::sort(col_index_mapping.begin(), col_index_mapping.end());
 
   uint32_t decode_col_count = 0;
   for (uint32_t i = 0; i < schemas_.size(); ++i) {
@@ -293,25 +254,23 @@ int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
     if (decode_col_count == size) {
       break;
     }
-    auto& item = col_index_mapping[decode_col_count];
 
-    int offset = -1;
-    if (item.first == i) {
-      offset = item.second;
-      ++decode_col_count;
+    if(column_indexes_serial.find(decode_col_count) == column_indexes_serial.end()) {
+      DecodeOrSkip(schema, key_buf, value_buf, record, -1, true, value_header);
+    } else {
+      int result_index = column_indexes_serial[decode_col_count++];
+      DecodeOrSkip(schema, key_buf, value_buf, record, result_index,
+                   false, value_header);
     }
-
-    DecodeOrSkip(schema, key_buf, value_buf, record, offset, offset == -1,
-                 value_header.col_id_offset_map);
   }
 
   return 0;
 }
 
 int RecordDecoderV2::Decode(const KeyValue& key_value,
-                            const std::vector<int>& column_indexes,
+                            std::unordered_map<int, int>& column_indexes_serial,
                             std::vector<std::any>& record) {
-  return Decode(key_value.GetKey(), key_value.GetValue(), column_indexes,
+  return Decode(key_value.GetKey(), key_value.GetValue(), column_indexes_serial,
                 record);
 }
 

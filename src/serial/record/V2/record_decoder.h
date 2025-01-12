@@ -17,30 +17,29 @@
 
 #include <map>
 #include <memory>
+#include <unordered_map>
 
 #include "any"
 #include "common.h"
-
-#include "functional"  // IWYU pragma: keep
-#include "optional"    // IWYU pragma: keep
-#include "serial/schema/V2/boolean_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/boolean_schema.h"  // IWYU pragma: keep
-#include "serial/schema/V2/double_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/double_schema.h"  // IWYU pragma: keep
-#include "serial/schema/V2/float_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/float_schema.h"  // IWYU pragma: keep
-#include "serial/schema/V2/integer_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/integer_schema.h"  // IWYU pragma: keep
-#include "serial/schema/V2/long_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/long_schema.h"  // IWYU pragma: keep
-#include "serial/schema/V2/string_list_schema.h" // IWYU pragma: keep
-#include "serial/schema/V2/string_schema.h"  // IWYU pragma: keep
-#include "serial/utils/V2/keyvalue.h"        // IWYU pragma: keep
-#include "serial/utils/V2/utils.h" // IWYU pragma: keep
-#include "serial/utils/V2/utils.h"  // IWYU pragma: keep
-
+#include "functional"                              // IWYU pragma: keep
+#include "optional"                                // IWYU pragma: keep
+#include "serial/schema/V2/boolean_list_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/boolean_schema.h"       // IWYU pragma: keep
+#include "serial/schema/V2/double_list_schema.h"   // IWYU pragma: keep
 #include "serial/schema/V2/double_list_schema.h"
+#include "serial/schema/V2/double_schema.h"        // IWYU pragma: keep
+#include "serial/schema/V2/float_list_schema.h"    // IWYU pragma: keep
+#include "serial/schema/V2/float_schema.h"         // IWYU pragma: keep
+#include "serial/schema/V2/integer_list_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/integer_schema.h"       // IWYU pragma: keep
+#include "serial/schema/V2/long_list_schema.h"     // IWYU pragma: keep
+#include "serial/schema/V2/long_schema.h"          // IWYU pragma: keep
+#include "serial/schema/V2/string_list_schema.h"   // IWYU pragma: keep
+#include "serial/schema/V2/string_schema.h"        // IWYU pragma: keep
+#include "serial/utils/V2/keyvalue.h"              // IWYU pragma: keep
 #include "serial/utils/V2/keyvalue.h"
+#include "serial/utils/V2/utils.h"  // IWYU pragma: keep
+#include "serial/utils/V2/utils.h"  // IWYU pragma: keep
 #include "serial/utils/V2/utils.h"
 
 namespace dingodb {
@@ -72,10 +71,12 @@ class RecordDecoderV2 {
   int DecodeKey(const std::string& key,
                 std::vector<std::any>& record /*output*/);
 
-  int Decode(const KeyValue& key_value, const std::vector<int>& column_indexes,
+  int Decode(const KeyValue& key_value,
+             std::unordered_map<int, int>& column_indexes_serial,
              std::vector<std::any>& record /*output*/);
+
   int Decode(const std::string& key, const std::string& value,
-             const std::vector<int>& column_indexes,
+             std::unordered_map<int, int>& column_indexes_serial,
              std::vector<std::any>& record /*output*/);
   int GetCodecVersion(Buf& buf) const;
 
