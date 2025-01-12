@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "serial/record/V2/record_decoder.h"
 #include "serial/record/record_decoder.h"
@@ -141,18 +142,19 @@ class RecordDecoder {
 
   // decode for v2.
   int Decode(const serialV2::KeyValue& key_value,
-             const std::vector<int>& column_indexes,
+             std::unordered_map<int, int>& column_indexes_serial,
              std::vector<std::any>& record /*output*/) {
-    return re_v2_->Decode(key_value, column_indexes, record);
+    return re_v2_->Decode(key_value, column_indexes_serial, record);
   }
 
   int Decode(const std::string& key, const std::string& value,
              const std::vector<int>& column_indexes,
+             std::unordered_map<int, int>& column_indexes_serial,
              std::vector<std::any>& record) {
     if (key.at(key.size() - 1) == dingodb::serialV2::CODEC_VERSION_V1) {
       return re_v1_->Decode(key, value, column_indexes, record);
     } else {
-      return re_v2_->Decode(key, value, column_indexes, record);
+      return re_v2_->Decode(key, value, column_indexes_serial, record);
     }
   }
 

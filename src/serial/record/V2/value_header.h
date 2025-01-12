@@ -15,6 +15,7 @@
 #ifndef DINGO_SERIAL_VALUE_HEADER_H_
 #define DINGO_SERIAL_VALUE_HEADER_H_
 
+#include <unordered_map>
 #include "common.h"
 #include "serial/utils/V2/buf.h"
 
@@ -31,8 +32,6 @@ class ValueHeader {
   int offset_pos;
   int data_pos;
 
-  std::map<int, int> col_id_offset_map = {};
-
   ValueHeader() = default;
 
   ValueHeader(Buf& value_buf) {
@@ -44,19 +43,7 @@ class ValueHeader {
     ids_pos = 8;
     offset_pos = ids_pos + ID_2_BYTE * total_col_cnt;
     data_pos = offset_pos + OFFSET_4_BYTE * total_col_cnt;
-
-    for (int i = 0; i < total_col_cnt; ++i) {
-      col_id_offset_map[value_buf.ReadShort(ids_pos)] =
-          value_buf.ReadInt(offset_pos);
-      ids_pos += ID_2_BYTE;
-      offset_pos += OFFSET_4_BYTE;
-    }
   }
-
-  bool allNullColumns() {
-    return total_col_cnt == cnt_null_col;
-  }
-
 };
 
 }  // namespace serialV2
