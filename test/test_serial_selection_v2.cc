@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 #include "serial/counter.h"
 #include "serial/record/V2/record_decoder.h"
@@ -113,7 +114,8 @@ class DingoSerialTest : public testing::Test {
     int64_t score = 214748364700L;
     std::string addr =
         "test address test 中文 表情😊🏷️👌 test "
-        "测试测试测试三🤣😂😁🐱‍🐉👏🐱‍💻✔🤳🤦‍♂️🤦‍♀️🙌测"
+        "测试测试测试三🤣😂😁🐱‍🐉👏🐱‍💻✔🤳🤦‍♂️🤦‍♀️🙌"
+        "测"
         "试"
         "测"
         "试"
@@ -189,30 +191,37 @@ TEST_F(DingoSerialTest, keyvaluecodeStringLoopTest) {
   int selection_columns_size = n - 3;
   {
     std::vector<int> indexes;
+    std::unordered_map<int, int> column_indexes_serial;
+
     indexes.reserve(selection_columns_size);
     for (int i = 0; i < selection_columns_size; i++) {
       indexes.push_back(i);
+      column_indexes_serial[i] = i;
     }
     std::vector<int>& column_indexes = indexes;
+
     std::vector<std::any> decoded_s_records;
     Counter load_cnter3;
     load_cnter3.ReStart();
 
-    rd.Decode(key, value, column_indexes, decoded_s_records);
+    rd.Decode(key, value, column_indexes_serial, decoded_s_records);
   }
 
   {
     std::vector<int> indexes;
+    std::unordered_map<int, int> column_indexes_serial;
+
     selection_columns_size = n - selection_columns_size;
     indexes.reserve(selection_columns_size);
     for (int i = 0; i < selection_columns_size; i++) {
       indexes.push_back(i);
+      column_indexes_serial[i] = i;
     }
     std::vector<int>& column_indexes = indexes;
     std::vector<std::any> decoded_s_records;
     Counter load_cnter3;
     load_cnter3.ReStart();
 
-    rd.Decode(key, value, column_indexes, decoded_s_records);
+    rd.Decode(key, value, column_indexes_serial, decoded_s_records);
   }
 }

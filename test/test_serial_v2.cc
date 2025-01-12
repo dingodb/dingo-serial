@@ -24,6 +24,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 #include "serial/record/V2/record_decoder.h"
 #include "serial/record/V2/record_encoder.h"
@@ -118,7 +119,9 @@ class DingoSerialTest : public testing::Test {
     int64_t score = 214748364700L;
     std::string addr =
         "test address test 中文 表情😊🏷️👌 test "
-        "测试测试测试三🤣😂😁🐱‍🐉👏🐱‍💻✔🤳🤦‍♂️🤦‍♀️🙌测"
+        "测试测试测试三🤣😂😁🐱‍🐉👏🐱‍💻✔🤳🤦‍♂️🤦‍♀️"
+        "🙌"
+        "测"
         "试"
         "测"
         "试"
@@ -1457,9 +1460,10 @@ TEST_F(DingoSerialTest, recordTest) {
   // delete record2;
 
   std::vector<int> index{0, 1, 3, 5};
+  std::unordered_map<int, int> index_serial{{0, 0}, {1, 1}, {3, 3}, {5, 5}};
   std::vector<int> index_temp{0, 1, 3, 5};
   std::vector<std::any> record3;
-  rd.Decode(key, value, index, record3);
+  rd.Decode(key, value, index_serial, record3);
   i = 0;
   for (const auto& bs : schemas) {
     BaseSchema::Type type = bs->GetType();
