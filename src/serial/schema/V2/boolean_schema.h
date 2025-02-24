@@ -39,6 +39,7 @@ class DingoSchema<bool> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   int Encode(const std::any& data, Buf& buf, bool nullFlag);

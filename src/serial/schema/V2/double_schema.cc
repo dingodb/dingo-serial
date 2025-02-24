@@ -146,6 +146,23 @@ double DingoSchema<double>::DecodeDoubleNotComparable(Buf& buf) {
   return *reinterpret_cast<double*>(v);
 }
 
+double DingoSchema<double>::DecodeDoubleNotComparable(Buf& buf, int offset) {
+  uint64_t data = buf.Read(offset++) & 0xFF;
+  if (IsLe()) {
+    for (int i = 0; i < 7; ++i) {
+      data <<= 8;
+      data |= buf.Read(offset++) & 0xFF;
+    }
+  } else {
+    for (int i = 1; i < 8; ++i) {
+      data |= (((uint64_t)buf.Read(offset++) & 0xFF) << (8 * i));
+    }
+  }
+
+  void* v = &data;
+  return *reinterpret_cast<double*>(v);
+}
+
 inline int DingoSchema<double>::GetLengthForKey() {
   if (AllowNull()) {
     return kDataLengthWithNull;
@@ -218,6 +235,10 @@ std::any DingoSchema<double>::DecodeKey(Buf& buf) {
 
 inline std::any DingoSchema<double>::DecodeValue(Buf& buf) {
   return std::move(std::any(DecodeDoubleNotComparable(buf)));
+}
+
+inline std::any DingoSchema<double>::DecodeValue(Buf& buf, int offset) {
+  return std::move(std::any(DecodeDoubleNotComparable(buf, offset)));
 }
 
 }  // namespace serialV2

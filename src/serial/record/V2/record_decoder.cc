@@ -75,7 +75,7 @@ void CastAndDecodeOrSkip(BaseSchemaPtr schema, Buf& key_buf, Buf& value_buf,
       } else {
         int offset = getOffset(schema->GetIndex());
         if (offset != -1) {
-          record.at(record_index) = dingo_schema->DecodeValue(value_buf);
+          record.at(record_index) = dingo_schema->DecodeValue(value_buf, offset);
         } else {
           record.at(record_index) = std::any();
         }
@@ -251,12 +251,13 @@ int RecordDecoderV2::Decode(const std::string& key, const std::string& value,
     if (schema == nullptr) {
       continue;
     }
-    if (decode_col_count == size) {
-      break;
-    }
+    // if (decode_col_count == size) {
+    //   break;
+    // }
 
     if(column_indexes_serial.find(decode_col_count) == column_indexes_serial.end()) {
       DecodeOrSkip(schema, key_buf, value_buf, record, -1, true, value_header);
+      decode_col_count++;
     } else {
       int result_index = column_indexes_serial[decode_col_count++];
       DecodeOrSkip(schema, key_buf, value_buf, record, result_index,

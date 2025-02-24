@@ -50,6 +50,22 @@ void DingoSchema<std::vector<std::string>>::DecodeStringListNotComparable(
   }
 }
 
+void DingoSchema<std::vector<std::string>>::DecodeStringListNotComparable(
+    Buf& buf, std::vector<std::string>& data, int offset) {
+  int size = buf.ReadInt(offset);
+  data.resize(size);
+  offset += 4;
+  for (int i = 0; i < size; ++i) {
+    int str_len = buf.ReadInt(offset);
+    offset += 4;
+    std::string str(str_len, '\n');
+    for (int j = 0; j < str_len; ++j) {
+      str[j] = buf.Read(offset++);
+    }
+    data[i] = std::move(str);
+  }
+}
+
 int DingoSchema<std::vector<std::string>>::GetLengthForKey() {
   throw std::runtime_error("string list unsupport length");
   return -1;
@@ -103,6 +119,13 @@ std::any DingoSchema<std::vector<std::string>>::DecodeKey(Buf&) {
 std::any DingoSchema<std::vector<std::string>>::DecodeValue(Buf& buf) {
   std::vector<std::string> data;
   DecodeStringListNotComparable(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::vector<std::string>>::DecodeValue(Buf& buf, int offset) {
+  std::vector<std::string> data;
+  DecodeStringListNotComparable(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

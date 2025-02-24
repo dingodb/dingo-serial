@@ -107,6 +107,7 @@ class BaseSchema {
 
   virtual std::any DecodeKey(Buf& buf) = 0;
   virtual std::any DecodeValue(Buf& buf) = 0;
+  virtual std::any DecodeValue(Buf& buf, int offset) = 0;
 
  protected:
   const uint8_t k_null = 0;

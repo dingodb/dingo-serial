@@ -37,6 +37,7 @@ class DingoSchema : public BaseSchema {
 
   std::any DecodeKey(Buf& buf /*NOLINT*/) override { return std::any(); }
   std::any DecodeValue(Buf& buf /*NOLINT*/) override { return std::any(); }
+  std::any DecodeValue(Buf& buf /*NOLINT*/, int offset) override { return std::any(); }
 };
 
 }  // namespace serialV2

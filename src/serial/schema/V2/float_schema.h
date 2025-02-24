@@ -39,6 +39,7 @@ class DingoSchema<float> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeFloatComparable(float data, Buf& buf);
@@ -46,6 +47,7 @@ class DingoSchema<float> : public BaseSchema {
 
   void EncodeFloatNotComparable(float data, Buf& buf);
   float DecodeFloatNotComparable(Buf& buf);
+  float DecodeFloatNotComparable(Buf& buf, int offset);
 };
 
 }  // namespace V2

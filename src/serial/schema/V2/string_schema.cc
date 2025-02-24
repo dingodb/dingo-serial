@@ -97,6 +97,17 @@ void DingoSchema<std::string>::DecodeBytesNotComparable(Buf& buf,
   }
 }
 
+void DingoSchema<std::string>::DecodeBytesNotComparable(Buf& buf,
+                                                        std::string& data,
+                                                        int offset) {
+  int size = buf.ReadInt(offset);
+  data.resize(size);
+  offset += 4;
+  for (int i = 0; i < size; ++i) {
+    data[i] = buf.Read(offset++);
+  }
+}
+
 int DingoSchema<std::string>::GetLengthForKey() {
   throw std::runtime_error("String unsupport length");
 }
@@ -191,6 +202,13 @@ std::any DingoSchema<std::string>::DecodeKey(Buf& buf) {
 std::any DingoSchema<std::string>::DecodeValue(Buf& buf) {
   std::string data;
   DecodeBytesNotComparable(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::string>::DecodeValue(Buf& buf, int offset) {
+  std::string data;
+  DecodeBytesNotComparable(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

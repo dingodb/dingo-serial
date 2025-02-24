@@ -42,10 +42,12 @@ class DingoSchema<std::vector<int64_t>> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeLongList(const std::vector<int64_t>& data, Buf& buf);
   void DecodeLongList(Buf& buf, std::vector<int64_t>& data) const;
+  void DecodeLongList(Buf& buf, std::vector<int64_t>& data, int offset) const;
 };
 
 }  // namespace serialV2

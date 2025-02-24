@@ -102,6 +102,11 @@ int64_t DingoSchema<int64_t>::DecodeLongNotComparable(Buf& buf) {
   return static_cast<int64_t>(l);
 }
 
+int64_t DingoSchema<int64_t>::DecodeLongNotComparable(Buf& buf, int offset) {
+
+  return static_cast<int64_t>(buf.ReadLong(offset));
+}
+
 int DingoSchema<int64_t>::GetLengthForKey() {
   if (AllowNull()) {
     return kDataLengthWithNull;
@@ -175,6 +180,10 @@ std::any DingoSchema<int64_t>::DecodeKey(Buf& buf) {
 
 inline std::any DingoSchema<int64_t>::DecodeValue(Buf& buf) {
   return std::any(DecodeLongNotComparable(buf));
+}
+
+inline std::any DingoSchema<int64_t>::DecodeValue(Buf& buf, int offset) {
+  return std::any(DecodeLongNotComparable(buf, offset));
 }
 
 }  // namespace serialV2

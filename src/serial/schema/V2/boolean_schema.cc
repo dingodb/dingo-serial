@@ -132,5 +132,9 @@ std::any DingoSchema<bool>::DecodeValue(Buf& buf) {
   return std::any(static_cast<bool>(buf.Read()));
 }
 
+std::any DingoSchema<bool>::DecodeValue(Buf& buf, int offset) {
+  return std::any(static_cast<bool>(buf.Read(offset)));
+}
+
 }  // namespace serialV2
 }  // namespace dingodb
