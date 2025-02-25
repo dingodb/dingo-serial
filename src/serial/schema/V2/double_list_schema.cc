@@ -103,6 +103,51 @@ void DingoSchema<std::vector<double>>::DecodeDoubleList(
   }
 }
 
+void DingoSchema<std::vector<double>>::DecodeDoubleList(
+    Buf& buf, std::vector<double>& data, int offset) {
+  const int size = buf.ReadInt(offset);
+  data.resize(size);
+  offset += 4;
+  if (IsLe()) {
+    for (int i = 0; i < size; ++i) {
+      uint64_t l = 0;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint64_t>(buf.Read(offset++)) & 0xFF);
+
+      void* v = &l;
+      data[i] = *reinterpret_cast<double*>(v);
+    }
+  } else {
+    for (int i = 0; i < size; ++i) {
+      uint64_t l = 0;
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 0));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 1));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 2));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 3));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 4));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 5));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 6));
+      l |= ((static_cast<uint64_t>(buf.Read(offset++)) & 0xFF) << (8 * 7));
+
+      void* v = &l;
+      data[i] = *reinterpret_cast<double*>(v);
+    }
+  }
+}
+
 int DingoSchema<std::vector<double>>::GetLengthForKey() {
   throw std::runtime_error("double list unsupport length");
   return -1;
@@ -154,6 +199,13 @@ std::any DingoSchema<std::vector<double>>::DecodeKey(Buf&) {
 std::any DingoSchema<std::vector<double>>::DecodeValue(Buf& buf) {
   std::vector<double> data;
   DecodeDoubleList(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::vector<double>>::DecodeValue(Buf& buf, int offset) {
+  std::vector<double> data;
+  DecodeDoubleList(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

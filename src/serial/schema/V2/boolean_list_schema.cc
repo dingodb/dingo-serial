@@ -90,5 +90,16 @@ std::any DingoSchema<std::vector<bool>>::DecodeValue(Buf& buf) {
   return std::move(std::any(std::move(data)));
 }
 
+std::any DingoSchema<std::vector<bool>>::DecodeValue(Buf& buf, int offset) {
+  int size = buf.ReadInt(offset);
+  offset += 4;
+  std::vector<bool> data(size, false);
+  for (int i = 0; i < size; ++i) {
+    data[i] = buf.Read(offset++);
+  }
+
+  return std::move(std::any(std::move(data)));
+}
+
 }  // namespace serialV2
 }  // namespace dingodb

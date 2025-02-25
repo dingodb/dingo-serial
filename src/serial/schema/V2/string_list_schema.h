@@ -42,12 +42,16 @@ class DingoSchema<std::vector<std::string>> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   static int EncodeStringListNotComparable(const std::vector<std::string>& data,
                                            Buf& buf);
   static void DecodeStringListNotComparable(Buf& buf,
                                             std::vector<std::string>& data);
+  static void DecodeStringListNotComparable(Buf& buf,
+                                            std::vector<std::string>& data,
+                                            int offset);
 };
 
 }  // namespace serialV2

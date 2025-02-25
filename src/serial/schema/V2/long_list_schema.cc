@@ -80,6 +80,35 @@ void DingoSchema<std::vector<int64_t>>::DecodeLongList(
   }
 }
 
+void DingoSchema<std::vector<int64_t>>::DecodeLongList(
+    Buf& buf, std::vector<int64_t>& data, int offset) const {
+  int size = buf.ReadInt();
+  data.resize(size);
+  offset += 4;
+  if (DINGO_LIKELY(IsLe())) {
+    for (int i = 0; i < size; ++i) {
+      uint64_t value = buf.Read(offset++) & 0xFF;
+
+      for (int j = 0; j < 7; ++j) {
+        value <<= 8;
+        value |= buf.Read(offset++) & 0xFF;
+      }
+
+      data[i] = static_cast<int64_t>(value);
+    }
+  } else {
+    for (int i = 0; i < size; ++i) {
+      uint64_t value = buf.Read(offset++) & 0xFF;
+
+      for (int j = 1; j < 8; ++j) {
+        value |= (((uint64_t)buf.Read(offset++) & 0xFF) << (8 * j));
+      }
+
+      data[i] = static_cast<int64_t>(value);
+    }
+  }
+}
+
 int DingoSchema<std::vector<int64_t>>::GetLengthForKey() {
   throw std::runtime_error("long list unsupport length");
   return -1;
@@ -134,6 +163,13 @@ std::any DingoSchema<std::vector<int64_t>>::DecodeKey(Buf&) {
 std::any DingoSchema<std::vector<int64_t>>::DecodeValue(Buf& buf) {
   std::vector<int64_t> data;
   DecodeLongList(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::vector<int64_t>>::DecodeValue(Buf& buf, int offset) {
+  std::vector<int64_t> data;
+  DecodeLongList(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

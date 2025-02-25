@@ -71,6 +71,29 @@ void DingoSchema<std::vector<int32_t>>::DecodeIntList(
   }
 }
 
+void DingoSchema<std::vector<int32_t>>::DecodeIntList(
+    Buf& buf, std::vector<int32_t>& data, int offset) {
+  int size = buf.ReadInt(offset);
+  data.resize(size);
+  offset += 4;
+  if (DINGO_LIKELY(IsLe())) {
+    for (int i = 0; i < size; ++i) {
+      uint32_t value = ((buf.Read(offset++) & 0xFF) << 24) |
+                       ((buf.Read(offset++) & 0xFF) << 16) |
+                       ((buf.Read(offset++) & 0xFF) << 8) | (buf.Read(offset++) & 0xFF);
+      data[i] = static_cast<int32_t>(value);
+    }
+
+  } else {
+    for (int i = 0; i < size; ++i) {
+      uint32_t value = (buf.Read(offset++) & 0xFF) | ((buf.Read(offset++) & 0xFF) << 8) |
+                       ((buf.Read(offset++) & 0xFF) << 16) |
+                       ((buf.Read(offset++) & 0xFF) << 24);
+      data[i] = static_cast<int32_t>(value);
+    }
+  }
+}
+
 int DingoSchema<std::vector<int32_t>>::GetLengthForKey() {
   throw std::runtime_error("int list unsupport length");
   return -1;
@@ -122,6 +145,13 @@ std::any DingoSchema<std::vector<int32_t>>::DecodeKey(Buf&) {
 std::any DingoSchema<std::vector<int32_t>>::DecodeValue(Buf& buf) {
   std::vector<int32_t> data;
   DecodeIntList(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::vector<int32_t>>::DecodeValue(Buf& buf, int offset) {
+  std::vector<int32_t> data;
+  DecodeIntList(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

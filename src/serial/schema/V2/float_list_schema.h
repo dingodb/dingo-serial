@@ -42,10 +42,12 @@ class DingoSchema<std::vector<float>> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeFloatList(const std::vector<float>& data, Buf& buf);
   void DecodeFloatList(Buf& buf, std::vector<float>& data);
+  void DecodeFloatList(Buf& buf, std::vector<float>& data, int offset);
 };
 
 }  // namespace serialV2

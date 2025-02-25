@@ -119,6 +119,24 @@ float DingoSchema<float>::DecodeFloatNotComparable(Buf& buf) {
   return *reinterpret_cast<float*>(v);
 }
 
+float DingoSchema<float>::DecodeFloatNotComparable(Buf& buf, int offset) {
+  uint32_t in = buf.Read(offset++) & 0xFF;
+
+  if (DINGO_LIKELY(IsLe())) {
+    for (int i = 0; i < 3; i++) {
+      in <<= 8;
+      in |= buf.Read(offset++) & 0xFF;
+    }
+  } else {
+    for (int i = 1; i < 4; i++) {
+      in |= (((uint32_t)buf.Read(offset++) & 0xFF) << (8 * i));
+    }
+  }
+
+  void* v = &in;
+  return *reinterpret_cast<float*>(v);
+}
+
 int DingoSchema<float>::GetLengthForKey() {
   if(AllowNull()) {
     return kDataLengthWithNull;
@@ -192,6 +210,10 @@ std::any DingoSchema<float>::DecodeKey(Buf& buf) {
 
 inline std::any DingoSchema<float>::DecodeValue(Buf& buf) {
   return std::move(std::any(DecodeFloatNotComparable(buf)));
+}
+
+inline std::any DingoSchema<float>::DecodeValue(Buf& buf, int offset) {
+  return std::move(std::any(DecodeFloatNotComparable(buf, offset)));
 }
 
 }  // namespace V2

@@ -42,10 +42,12 @@ class DingoSchema<std::vector<double>> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeDoubleList(const std::vector<double>& data, Buf& buf);
   void DecodeDoubleList(Buf& buf, std::vector<double>& data);
+  void DecodeDoubleList(Buf& buf, std::vector<double>& data, int offset);
 };
 
 }  // namespace serialV2

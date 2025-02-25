@@ -39,6 +39,7 @@ class DingoSchema<int64_t> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeLongComparable(int64_t data, Buf& buf);
@@ -46,6 +47,7 @@ class DingoSchema<int64_t> : public BaseSchema {
 
   void EncodeLongNotComparable(int64_t data, Buf& buf);
   int64_t DecodeLongNotComparable(Buf& buf);
+  int64_t DecodeLongNotComparable(Buf& buf, int offset);
 };
 
 }  // namespace serialV2

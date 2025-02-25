@@ -82,6 +82,39 @@ void DingoSchema<std::vector<float>>::DecodeFloatList(
   }
 }
 
+void DingoSchema<std::vector<float>>::DecodeFloatList(
+    Buf& buf, std::vector<float>& data, int offset) {
+  int size = buf.ReadInt(offset);
+  data.resize(size);
+  offset += 4;
+  if (DINGO_LIKELY(IsLe())) {
+    for (int i = 0; i < size; ++i) {
+      uint32_t l = 0;
+      l |= (static_cast<uint32_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint32_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint32_t>(buf.Read(offset++)) & 0xFF);
+      l <<= 8;
+      l |= (static_cast<uint32_t>(buf.Read(offset++)) & 0xFF);
+
+      void* v = &l;
+      data[i] = *reinterpret_cast<float*>(v);
+    }
+  } else {
+    for (int i = 0; i < size; ++i) {
+      uint32_t l = 0;
+      l |= ((static_cast<uint32_t>(buf.Read(offset++)) & 0xFF) << (8 * 0));
+      l |= ((static_cast<uint32_t>(buf.Read(offset++)) & 0xFF) << (8 * 1));
+      l |= ((static_cast<uint32_t>(buf.Read(offset++)) & 0xFF) << (8 * 2));
+      l |= ((static_cast<uint32_t>(buf.Read(offset++)) & 0xFF) << (8 * 3));
+
+      void* v = &l;
+      data[i] = *reinterpret_cast<float*>(v);
+    }
+  }
+}
+
 int DingoSchema<std::vector<float>>::GetLengthForKey() {
   throw std::runtime_error("float list unsupport length");
   return -1;
@@ -135,6 +168,13 @@ std::any DingoSchema<std::vector<float>>::DecodeKey(Buf&) {
 std::any DingoSchema<std::vector<float>>::DecodeValue(Buf& buf) {
   std::vector<float> data;
   DecodeFloatList(buf, data);
+
+  return std::move(std::any(std::move(data)));
+}
+
+std::any DingoSchema<std::vector<float>>::DecodeValue(Buf& buf, int offset) {
+  std::vector<float> data;
+  DecodeFloatList(buf, data, offset);
 
   return std::move(std::any(std::move(data)));
 }

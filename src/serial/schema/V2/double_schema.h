@@ -39,6 +39,7 @@ class DingoSchema<double> : public BaseSchema {
 
   std::any DecodeKey(Buf& buf) override;
   std::any DecodeValue(Buf& buf) override;
+  std::any DecodeValue(Buf& buf, int offset) override;
 
  private:
   void EncodeDoubleComparable(double data, Buf& buf);
@@ -46,6 +47,7 @@ class DingoSchema<double> : public BaseSchema {
 
   void EncodeDoubleNotComparable(double data, Buf& buf);
   double DecodeDoubleNotComparable(Buf& buf);
+  double DecodeDoubleNotComparable(Buf& buf, int offset);
 };
 
 }  // namespace serialV2
