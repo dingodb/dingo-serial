@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 // #include "glog/logging.h"
 
