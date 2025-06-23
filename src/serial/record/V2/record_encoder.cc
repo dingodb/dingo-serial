@@ -23,6 +23,14 @@
 
 // #include "common/helper.h"
 #include "serial/utils/V2/keyvalue.h"  // IWYU pragma: keep
+#include "serial/utils/V2/utils.h"     // IWYU pragma: keep
+
+#include "serial/schema/V2/boolean_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/double_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/float_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/integer_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/long_schema.h"  // IWYU pragma: keep
+#include "serial/schema/V2/string_schema.h"  // IWYU pragma: keep
 
 namespace dingodb {
 namespace serialV2 {
@@ -85,6 +93,81 @@ int RecordEncoderV2::EncodeKey(char prefix, const std::vector<std::any>& record,
     if (schema->IsKey()) {
       const auto& column = record.at(i);
       schema->EncodeKey(column, buf);
+    }
+  }
+
+  EncodeCodecVersion(buf);
+
+  buf.GetString(output);
+  return output.size();
+}
+
+int RecordEncoderV2::EncodeKeyPrefix(char prefix, const std::vector<std::string >& keys,
+                                     std::string& output) {
+  Buf buf(kBufInitCapacity, this->le_);
+
+  // namespace | common_id | ... | codecVersion
+  EncodePrefix(buf, prefix);
+
+  // loop meta schemas.
+  for (int i = 0; i < schemas_.size(); ++i) {
+    const auto& schema = schemas_.at(i);
+    BaseSchema::Type type = schema->GetType();
+
+    switch (type) {
+      case BaseSchema::kBool: {
+        auto bos =
+            std::dynamic_pointer_cast<DingoSchema<bool>>(schema);
+        if (bos->IsKey() && i < keys.size()) {
+            bos->EncodeKeyPrefix(std::any(StringToBool(keys[i])), buf);
+        }
+        break;
+      }
+      case BaseSchema::kInteger: {
+        auto is =
+            std::dynamic_pointer_cast<DingoSchema<int32_t>>(
+                schema);
+        if (is->IsKey() && i < keys.size()) {
+          is->EncodeKeyPrefix(std::any(StringToInt32(keys[i])), buf);
+        }
+        break;
+      }
+      case BaseSchema::kFloat: {
+        auto fs =
+            std::dynamic_pointer_cast<DingoSchema<float>>(schema);
+        if (fs->IsKey() && i < keys.size()) {
+          fs->EncodeKeyPrefix(std::any(StringToFloat(keys[i])), buf);
+        }
+        break;
+      }
+      case BaseSchema::kLong: {
+        auto ls =
+            std::dynamic_pointer_cast<DingoSchema<int64_t>>(
+                schema);
+        if (ls->IsKey() && i < keys.size()) {
+          ls->EncodeKeyPrefix(std::any(StringToInt64(keys[i])), buf);
+        }
+        break;
+      }
+      case BaseSchema::kDouble: {
+        auto ds =
+            std::dynamic_pointer_cast<DingoSchema<double>>(schema);
+        if (ds->IsKey() && i < keys.size()) {
+          ds->EncodeKeyPrefix(std::any(StringToDouble(keys[i])), buf);
+        }
+        break;
+      }
+      case BaseSchema::kString: {
+        auto ss = std::dynamic_pointer_cast<
+            DingoSchema<std::string>>(schema);
+        if (ss->IsKey() && i < keys.size()) {
+          ss->EncodeKeyPrefix(std::any(std::string(keys[i])), buf);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
 

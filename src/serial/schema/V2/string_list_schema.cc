@@ -98,6 +98,10 @@ int DingoSchema<std::vector<std::string>>::EncodeKey(const std::any&, Buf&) {
   return -1;
 }
 
+void DingoSchema<std::vector<std::string>>::EncodeKeyPrefix(const std::any&, Buf&) {
+  throw std::runtime_error("Unsupported encode key list type");
+}
+
 int DingoSchema<std::vector<std::string>>::EncodeValue(const std::any& data,
                                                        Buf& buf) {
   if (DINGO_UNLIKELY(!AllowNull() && !data.has_value())) {

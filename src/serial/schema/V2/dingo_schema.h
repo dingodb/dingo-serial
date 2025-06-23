@@ -33,6 +33,7 @@ class DingoSchema : public BaseSchema {
   int SkipValue(Buf& /*buf*/) override { return 0; }
 
   int EncodeKey(const std::any& /*data*/, Buf& /*buf*/) override { return 0; }
+  void EncodeKeyPrefix(const std::any& /*data*/, Buf& /*buf*/) override { return; }
   int EncodeValue(const std::any& /*data*/, Buf& /*buf*/) override { return 0; }
 
   std::any DecodeKey(Buf& buf /*NOLINT*/) override { return std::any(); }

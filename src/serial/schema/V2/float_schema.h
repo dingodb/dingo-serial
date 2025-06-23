@@ -35,6 +35,7 @@ class DingoSchema<float> : public BaseSchema {
   int SkipValue(Buf& buf) override;
 
   int EncodeKey(const std::any& data, Buf& buf) override;
+  void EncodeKeyPrefix(const std::any& data, Buf& buf) override;
   int EncodeValue(const std::any& data, Buf& buf) override;
 
   std::any DecodeKey(Buf& buf) override;

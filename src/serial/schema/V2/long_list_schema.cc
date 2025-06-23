@@ -136,6 +136,10 @@ int DingoSchema<std::vector<int64_t>>::EncodeKey(const std::any&, Buf&) {
   return -1;
 }
 
+void DingoSchema<std::vector<int64_t>>::EncodeKeyPrefix(const std::any&, Buf&) {
+  throw std::runtime_error("Unsupport encode key list type");
+}
+
 // {n:4byte}|{value: 8byte}*n
 int DingoSchema<std::vector<int64_t>>::EncodeValue(const std::any& data,
                                                    Buf& buf) {
