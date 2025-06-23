@@ -142,6 +142,10 @@ int DingoSchema<std::vector<float>>::EncodeKey(const std::any&, Buf&) {
   return -1;
 }
 
+void DingoSchema<std::vector<float>>::EncodeKeyPrefix(const std::any&, Buf&) {
+  throw std::runtime_error("Unsupport encoding key list type");
+}
+
 // {n:4byte}|{value: 4byte}*n
 int DingoSchema<std::vector<float>>::EncodeValue(const std::any& data,
                                                  Buf& buf) {

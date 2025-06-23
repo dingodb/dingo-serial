@@ -103,6 +103,7 @@ class BaseSchema {
   virtual int SkipValue(Buf& buf) = 0;
 
   virtual int EncodeKey(const std::any& data, Buf& buf) = 0;
+  virtual void EncodeKeyPrefix(const std::any& data, Buf& buf) = 0;
   virtual int EncodeValue(const std::any& data, Buf& buf) = 0;
 
   virtual std::any DecodeKey(Buf& buf) = 0;

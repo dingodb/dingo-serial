@@ -131,6 +131,10 @@ int DingoSchema<int32_t>::EncodeKey(const std::any& data, Buf& buf) {
   }
 }
 
+void DingoSchema<int32_t>::EncodeKeyPrefix(const std::any& data, Buf& buf) {
+  EncodeKey(data, buf);
+}
+
 // {value: 4byte}
 int DingoSchema<int32_t>::EncodeValue(const std::any& data, Buf& buf) {
   if (DINGO_UNLIKELY(!AllowNull() && !data.has_value())) {

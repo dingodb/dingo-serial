@@ -110,7 +110,7 @@ class RecordEncoder {
     if (DINGO_UNLIKELY(codec_version_ == serialV2::CODEC_VERSION_V1)) {
       return re_v1_->EncodeKeyPrefix(prefix, keys, output);
     } else {
-      throw std::runtime_error("Unsupport function EncodeKeyPrefix.");
+      return re_v2_->EncodeKeyPrefix(prefix, keys, output);
     }
   }
 

@@ -113,6 +113,10 @@ int DingoSchema<bool>::EncodeKey(const std::any& data, Buf& buf) {
   }
 }
 
+void DingoSchema<bool>::EncodeKeyPrefix(const std::any& data, Buf& buf) {
+  EncodeKey(data, buf);
+}
+
 int DingoSchema<bool>::EncodeValue(const std::any& data, Buf& buf) {
   return Encode(data, buf, false);
 }

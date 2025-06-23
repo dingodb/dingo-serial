@@ -170,6 +170,10 @@ int DingoSchema<std::string>::EncodeKey(const std::any& data, Buf& buf) {
   }
 }
 
+void DingoSchema<std::string>::EncodeKeyPrefix(const std::any& data, Buf& buf) {
+  EncodeKey(data, buf);
+}
+
 int DingoSchema<std::string>::EncodeValue(const std::any& data, Buf& buf) {
   if (DINGO_UNLIKELY(!AllowNull() && !data.has_value())) {
     throw std::runtime_error("data not has value.");

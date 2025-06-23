@@ -66,6 +66,9 @@ class RecordEncoderV2 {
                 std::string& output);
   int EncodeValue(const std::vector<std::any>& record, std::string& output);
 
+  int EncodeKeyPrefix(char prefix, const std::vector<std::string>& record,
+                      std::string& output);
+
   int EncodeMaxKeyPrefix(char prefix, std::string& output) const;
   int EncodeMinKeyPrefix(char prefix, std::string& output) const;
   void Refresh();

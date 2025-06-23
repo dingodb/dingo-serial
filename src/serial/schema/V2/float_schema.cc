@@ -182,6 +182,10 @@ int DingoSchema<float>::EncodeKey(const std::any& data, Buf& buf) {
   }
 }
 
+void DingoSchema<float>::EncodeKeyPrefix(const std::any& data, Buf& buf) {
+  EncodeKey(data, buf);
+}
+
 // {value: 4byte}
 int DingoSchema<float>::EncodeValue(const std::any& data, Buf& buf) {
   if (DINGO_UNLIKELY(!AllowNull() && !data.has_value())) {
